@@ -1,0 +1,21 @@
+{
+    "manifest_version": 2,
+    
+    "name": "Yelp Cemetery Checker",
+    "description": "This extension checks if any of your Yelp reviews have gone to the 'not recommended' pile (the cemetery).",
+    "version": "1.0",
+
+    "content_scripts": [
+        {
+            "matches": ["https://www.yelp.com/user_details*"],
+            "js": ["main.js"]
+        }
+    ],
+
+    "page_action": {
+        "default_icon": "sam_ritas.jpg",
+        "default_popup": "popup.html",
+        "default_title": "Yelp Cemetery Checker"
+    }
+
+}

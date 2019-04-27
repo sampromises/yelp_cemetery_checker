@@ -13,7 +13,6 @@
     ],
 
     "page_action": {
-        "default_icon": "sam_ritas.jpg",
         "default_popup": "popup.html",
         "default_title": "Yelp Cemetery Checker"
     }

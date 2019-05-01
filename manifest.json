@@ -7,7 +7,7 @@
 
     "content_scripts": [
         {
-            "matches": ["https://www.yelp.com/user_details*"],
+            "matches": ["https://www.yelp.com/user_details?*"],
             "js": [
                 "main.js",
                 "user_page.js",

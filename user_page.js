@@ -1,4 +1,4 @@
-// Return whether current user profile page is the current user (i.e. logged in)
+// UNUSED - Return whether current user profile page is the current user (i.e. logged in)
 function isCurrentUser() {
     return Boolean(document.querySelector('.ysection.view-stats'));
 }
@@ -19,23 +19,37 @@ function getUserName() {
 
 // Get the date that this user started Yelping
 function getUserYelpingSince() {
-    if (isCurrentUser()) {
-        console.log('getUserYelpingSince() - is current user');
-        var text = document.querySelector('#super-container > div > div.column.column-beta > div > div.user-details-overview_sidebar > div:nth-child(6) > ul > li:nth-child(2) > p').innerText;
-    } else {
-        console.log('getUserYelpingSince() - is not current user');
-        var text = document.querySelector('#super-container > div > div.column.column-beta > div > div.user-details-overview_sidebar > div:nth-child(5) > ul > li:nth-child(2) > p').innerText;
-    }
-    console.log('getUserYelpingSince() found:', text);
-    var date = Date.parse(text);
-    return date;
+    var rawLines = document.documentElement.innerHTML.split('\n');
+    var index = rawLines.indexOf('            <h4>Yelping Since</h4>') + 1;
+
+    var dateText = rawLines[index].trim();
+    dateText = dateText.substring(3, dateText.length);
+    dateText = dateText.substring(0, dateText.indexOf('<'));
+
+    console.log('getUserYelpingSince() found:', dateText);
+    return Date.parse(dateText);
+}
+
+// Get how many reviews this user has
+function getUserReviewCount() {
+    var numReviews = parseInt(document.querySelector('.review-count strong').innerText);
+    return numReviews;
 }
 
 // Get user's 'Reviews' page as a JS element
-function getReviewsPageElement() {
-    var href = document.querySelector('#super-container > div > div.column.column-alpha.user-details_sidebar > div > div > div.titled-nav_menus > div.titled-nav_menu > ul > li:nth-child(3) > a').getAttribute('href');
+function getReviewsPageHref() {
+    var url = document.URL;
+    var userId = url.substring(url.indexOf('?userid'), url.length);
 
-    console.log('href:', href);
+    return '/user_details_reviews_self' + userId;
+}
 
-    return getDocFromHref(href);
+// Get the date of the earliest review on this page, assuming sorted by date descending
+function getDateOfBottomReview(page) {
+    // Get the most-bottom review on this page (sorted by most recent, so bottom is earliest date)
+    var reviews = page.querySelector('ul.ylist.ylist-bordered.reviews').querySelectorAll('.review');
+    var lastReview = reviews[reviews.length-1];
+    var earliestDate = Date.parse(lastReview.querySelector('.rating-qualifier').innerText);
+
+    return earliestDate;
 }

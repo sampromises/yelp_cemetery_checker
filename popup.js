@@ -20,7 +20,7 @@ function populateHtmlFromResponse(response) {
     if (response.status === 'working') {
         var numDone = response.numDone;
         
-        document.body.innerHTML = "Still working...\n";
+        document.body.innerHTML = "<h3>Still working...</h3>\n";
         document.body.innerHTML += numDone + "/" + numReviews + " reviews are done processing...";
         return;
     }
@@ -28,12 +28,12 @@ function populateHtmlFromResponse(response) {
     // All reviews are alive!
     var results = response.data;
     if (results.length == 0) {
-        document.body.innerHTML = "All " + numReviews + " reviews are alive! :)";
+        document.body.innerHTML = "<h3>All " + numReviews + " reviews are alive! :)</h3>";
         return;
     }
 
     // Show graveyarded reviews
-    document.body.innerHTML = "Graveyarded reviews:<ul id='results'></ul>";
+    document.body.innerHTML = "<h3>Graveyarded reviews:</h3><ul id='results'></ul>";
     for (let i = 0; i < results.length; i++) {
         let result = results[i];
         let bizName = result.bizName;
@@ -50,7 +50,7 @@ function populateHtmlFromResponse(response) {
 
     // Create a 'open all links in new tab' button
     let clickAllElem = document.createElement('span');
-    clickAllElem.innerHTML='<a id="click-all" href="#" onclick="clickAll();">Open all in new tabs</a>';
+    clickAllElem.innerHTML='<h4><a id="click-all" href="#" onclick="clickAll();">Open all in new tabs</a></h4>';
     document.body.appendChild(clickAllElem);
     document.getElementById('click-all').addEventListener('click', openAllBizLinks);
 }

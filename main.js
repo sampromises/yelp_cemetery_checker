@@ -43,33 +43,39 @@ function getUserReviewsList(reviewsPage) {
     return Promise.all(promises).then(arr => arr.flat());
 }
 
-// Get result for a single business (recursively)
+// Get promise for a single business result (recursive)
 function checkPageOfBizReview(bizName, href, pageNum, username, yelpingSince) {
-
     var promise = fetchPageRequest(href)
     .then(page => {
         let earliestDate = getDateOfBottomReview(page);
         let usernames = getUserNamesFromReviewPage(page);
-        console.log('For', href, 'got usernames:', usernames);
+        //console.log('For', href, 'got usernames:', usernames);
 
-
-        if (usernames.length == 0 || earliestDate > yelpingSince) { // Base case: Failure (end of reviews, or earlier than user yelping since)
-            console.log('getPageNumberOfUserReview() - BC: Username not found');
-            return {bizName: bizName, result: -1};
+        if (usernames.length == 0 || earliestDate > yelpingSince) {
+            // Base case: Failure (end of reviews, or earlier than possible)
+            console.log('checkPageOfBizReview() - BC: Username not found');
+            return {bizName: bizName, bizHref: href.split('?')[0], result: -1};
         } else if (usernames.includes(username)) { // Base case: Success
-            console.log('getPageNumberOfUserReview() - BC: Found username!');
-            return {bizName: bizName, result: pageNum};
+            console.log('checkPageOfBizReview() - BC: Found username!');
+            return {bizName: bizName, bizHref: href.split('?')[0], result: pageNum};
         } else { // Try the next page
             href = href.split('?')[0];
             href = href + '?start=' + ((pageNum-1)*usernames.length).toString() + '&sort_by=date_desc';
             return checkPageOfBizReview(bizName, href, pageNum+1, username, yelpingSince);
         }
+    })
+    .then(result => {
+        // Update numDone to show user progress in popup
+        FINAL_RESULTS.numDone = FINAL_RESULTS.numDone + 1;
+        chrome.runtime.sendMessage(FINAL_RESULTS);
+
+        return result;
     });
 
     return promise;
 }
 
-// The main function called to an array of reviews, each elem is: 0-business name, 1-business href, 2-page this user appears on
+// The main function called to an array of reviews
 function getReviewsRanked(reviews, username, yelpingSince) {
     var promises = [];
 
@@ -83,6 +89,18 @@ function getReviewsRanked(reviews, username, yelpingSince) {
     }
 
     return Promise.all(promises);
+}
+
+// Extract graveyarded reviews from results
+function getGraveyardedReviews(rankedReviews) {
+    var results = [];
+    for (let i = 0; i < rankedReviews.length; i++) {
+        let rankedReview = rankedReviews[i];
+        if (rankedReview.result === -1) {
+            results.push(rankedReview);
+        }
+    }
+    return results;
 }
 
 function main() {
@@ -104,18 +122,42 @@ function main() {
     .then(reviewsList => {
         console.log('main() - got reviewsList:', reviewsList);
 
+        FINAL_RESULTS.numReviews = expectedLength;
+        chrome.runtime.sendMessage(FINAL_RESULTS);
+
         //reviewsList = [];
-        //reviewsList.push({bizName:'Test', bizHref:'/biz/crescent-kitchen-long-island-city'});
+        //reviewsList.push({bizName:'Test', bizHref:'/biz/entropy-pittsburgh'});
 
         // Check each review to see if user's review still exists
         return getReviewsRanked(reviewsList, username, yelpingSince);
     })
     .then(rankedReviews => {
-        console.log('main() - Final result:', rankedReviews);
-
         var runTimeMs = performance.now() - startTime;
-        console.log('Total main execution time (ms):', runTimeMs);
+
+        var graveyardedReviews = getGraveyardedReviews(rankedReviews);
+
+        FINAL_RESULTS.status = 'done';
+        FINAL_RESULTS.data = graveyardedReviews;
+        FINAL_RESULTS.time = runTimeMs;
+
+        // Send results to the popup
+        chrome.runtime.sendMessage(FINAL_RESULTS);
     });
 }
 
+
+var FINAL_RESULTS = {
+    status: 'working',
+    numDone: 0,
+    numReviews: 0,
+    data: null,
+    time: null
+};
+
+// Start collect results immediately
 window.onload = main;
+
+// Give results if popup asks
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse){
+    sendResponse(FINAL_RESULTS);
+});

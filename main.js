@@ -1,6 +1,5 @@
 // Make a fetch request and return Promise for 'div' element of entire page
 function fetchPageRequest(url, callback) {
-    console.log('fetchPageRequest called for url:', url);
     return fetch(url).then(function(response) {
         let text = response.text();
         return text;
@@ -49,14 +48,11 @@ function checkPageOfBizReview(bizName, href, pageNum, username, yelpingSince) {
     .then(page => {
         let earliestDate = getDateOfBottomReview(page);
         let usernames = getUserNamesFromReviewPage(page);
-        //console.log('For', href, 'got usernames:', usernames);
 
         if (usernames.length == 0 || earliestDate > yelpingSince) {
             // Base case: Failure (end of reviews, or earlier than possible)
-            console.log('checkPageOfBizReview() - BC: Username not found');
             return {bizName: bizName, bizHref: href.split('?')[0], result: -1};
         } else if (usernames.includes(username)) { // Base case: Success
-            console.log('checkPageOfBizReview() - BC: Found username!');
             return {bizName: bizName, bizHref: href.split('?')[0], result: pageNum};
         } else { // Try the next page
             href = href.split('?')[0];
@@ -104,7 +100,6 @@ function getGraveyardedReviews(rankedReviews) {
 }
 
 function main() {
-    console.log('Page loaded!');
     var startTime = performance.now();
 
     var username = getUserName();
@@ -120,13 +115,8 @@ function main() {
         return getUserReviewsList(reviewsPage);
     })
     .then(reviewsList => {
-        console.log('main() - got reviewsList:', reviewsList);
-
         FINAL_RESULTS.numReviews = expectedLength;
         chrome.runtime.sendMessage(FINAL_RESULTS);
-
-        //reviewsList = [];
-        //reviewsList.push({bizName:'Test', bizHref:'/biz/entropy-pittsburgh'});
 
         // Check each review to see if user's review still exists
         return getReviewsRanked(reviewsList, username, yelpingSince);

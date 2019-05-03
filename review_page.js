@@ -10,7 +10,7 @@ function getUserReviewsSinglePage(reviewsPageDoc) {
 
         results.push(result);
     }
-    // console.log('getUserReviewsSinglePage returning', result);
+
     return results;
 }
 

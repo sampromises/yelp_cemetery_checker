@@ -1,19 +1,14 @@
 // Function to open all business links
 function openAllBizLinks() {
-    console.log('openAll called!');
     const links = document.getElementsByClassName('biz-link');
-    console.log('a links:', links);
-    console.log('a links.length:', links.length);
     for (let i = 0; i < links.length; i++) {
         let link = links[i];
-        console.log('opening in newtab:', link);
         chrome.tabs.create({url: link.href});
     }
 }
 
 // Populate html with results
 function populateHtmlFromResponse(response) {
-    console.log("populateHtmlFromResponse, got response:", response);
     var numReviews = response.numReviews;
 
     // Still working
@@ -42,7 +37,6 @@ function populateHtmlFromResponse(response) {
         let liElem = document.createElement('li');
         liElem.innerHTML = '<a class="biz-link" target="_blank" href=https://www.yelp.com' + bizHref + '>' + result.bizName + '</a>';
 
-        console.log('popup.html appending elem:', liElem);
 
         //document.body.appendChild(liElem); 
         document.getElementById('results').appendChild(liElem);
@@ -57,12 +51,10 @@ function populateHtmlFromResponse(response) {
 
 // Run when this popup.html opens
 chrome.tabs.query({'active': true, 'currentWindow':true}, function(tab){
-    console.log('popup.html sending message to tab id:', tab[0].id);
     chrome.tabs.sendMessage(tab[0].id, "stuff", populateHtmlFromResponse);
 });
 
 // If popup is open, and results finished
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse){
-    console.log('main.js finished; received message...', message);
     populateHtmlFromResponse(message);
 });

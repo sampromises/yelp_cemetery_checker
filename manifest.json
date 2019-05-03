@@ -3,7 +3,7 @@
     
     "name": "Yelp Cemetery Checker",
     "description": "This extension checks if any of your Yelp reviews have gone to the 'not recommended' pile (the cemetery).",
-    "version": "1.0",
+    "version": "1.1",
 
     "content_scripts": [
         {

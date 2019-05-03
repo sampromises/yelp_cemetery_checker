@@ -13,7 +13,6 @@ function getUserName() {
         name = first_name + ' ' + last_name;
     }
 
-    console.log('getUserName() returning:', name);
     return name;
 }
 
@@ -26,7 +25,6 @@ function getUserYelpingSince() {
     dateText = dateText.substring(3, dateText.length);
     dateText = dateText.substring(0, dateText.indexOf('<'));
 
-    console.log('getUserYelpingSince() found:', dateText);
     return Date.parse(dateText);
 }
 

@@ -49,27 +49,34 @@ function checkPageOfBizReview(bizName, href, pageNum, username, yelpingSince) {
     .then(page => {
         let earliestDate = getDateOfBottomReview(page);
         let usernames = getUserNamesFromReviewPage(page);
-        //console.log('For', href, 'got usernames:', usernames);
 
-        if (usernames.length == 0 || earliestDate > yelpingSince) {
+
+        if (usernames.includes(username)) { // Base case: Success
+            console.log('checkPageOfBizReview() - BC: Found username!');
+
+            // Update numDone to show user progress in popup
+            FINAL_RESULTS.numDone = FINAL_RESULTS.numDone + 1;
+            chrome.runtime.sendMessage(FINAL_RESULTS);
+
+            return {bizName: bizName, bizHref: href.split('?')[0], result: pageNum};
+        } else if (usernames.length == 0 || earliestDate < yelpingSince) {
             // Base case: Failure (end of reviews, or earlier than possible)
             console.log('checkPageOfBizReview() - BC: Username not found');
+            console.log('\tfor', href, 'got usernames:', usernames);
+            console.log('\tearliestDate:', earliestDate);
+            console.log('\tyelpingSince:', yelpingSince);
+
+            // Update numDone to show user progress in popup
+            FINAL_RESULTS.numDone = FINAL_RESULTS.numDone + 1;
+            chrome.runtime.sendMessage(FINAL_RESULTS);
+
             return {bizName: bizName, bizHref: href.split('?')[0], result: -1};
-        } else if (usernames.includes(username)) { // Base case: Success
-            console.log('checkPageOfBizReview() - BC: Found username!');
-            return {bizName: bizName, bizHref: href.split('?')[0], result: pageNum};
         } else { // Try the next page
             href = href.split('?')[0];
             href = href + '?start=' + ((pageNum-1)*usernames.length).toString() + '&sort_by=date_desc';
+            console.log('checkPageOfBizReview() - recursive, going to:', href);
             return checkPageOfBizReview(bizName, href, pageNum+1, username, yelpingSince);
         }
-    })
-    .then(result => {
-        // Update numDone to show user progress in popup
-        FINAL_RESULTS.numDone = FINAL_RESULTS.numDone + 1;
-        chrome.runtime.sendMessage(FINAL_RESULTS);
-
-        return result;
     });
 
     return promise;
@@ -125,8 +132,9 @@ function main() {
         FINAL_RESULTS.numReviews = expectedLength;
         chrome.runtime.sendMessage(FINAL_RESULTS);
 
-        //reviewsList = [];
         //reviewsList.push({bizName:'Test', bizHref:'/biz/entropy-pittsburgh'});
+        //reviewsList = [];
+        //reviewsList.push({bizName:'Test', bizHref:'biz/m-and-ms-world-new-york'});
 
         // Check each review to see if user's review still exists
         return getReviewsRanked(reviewsList, username, yelpingSince);

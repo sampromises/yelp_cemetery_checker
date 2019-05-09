@@ -7,12 +7,14 @@ function fetchPageRequest(url, callback) {
     return fetch(url).then(function(response) {
         let text = response.text();
         return text;
-    }).then(function(string) {
+    }).then(string => {
         // Wrap raw HTML to a large div element to be parsed
         var divWrapper = document.createElement('div');
         divWrapper.innerHTML = string;
 
         return divWrapper;
+    }).catch(error => {
+        console.log('fetchPageRequest error:', error)
     });
 }
 
@@ -24,18 +26,23 @@ function getUserReviewsList(href) {
     .then(page => {
         let reviews = getUserReviewsSinglePage(page);
 
-        let pageLinkElems = page.getElementsByClassName('pagination-links arrange_unit')[0].getElementsByClassName('arrange_unit');
-        let nextLinkElem = pageLinkElems[pageLinkElems.length-1].getElementsByClassName('u-decoration-none')[0];
+        try { // Could fail if only 1 review page
+            let pageLinkElems = page.getElementsByClassName('pagination-links arrange_unit')[0].getElementsByClassName('arrange_unit');
+            let nextLinkElem = pageLinkElems[pageLinkElems.length-1].getElementsByClassName('u-decoration-none')[0];
 
-        if (!nextLinkElem) { // Base case, no more review pages
-            DEBUG && console.log('getUserReviewsList() BC: no next');
+            if (!nextLinkElem) { // Base case, no more review pages
+                DEBUG && console.log('getUserReviewsList() BC: no next');
+                return reviews;
+            } else {
+                href = nextLinkElem.href;
+                return getUserReviewsList(href).
+                then(results => {
+                    return reviews.concat(results);
+                });
+            }
+        } catch(error) {
+            DEBUG && console.log('getUserReviewsList() - error, returning reviews');
             return reviews;
-        } else {
-            href = nextLinkElem.href;
-            return getUserReviewsList(href).
-            then(results => {
-                return reviews.concat(results);
-            });
         }
     });
 }

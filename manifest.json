@@ -9,24 +9,24 @@
         {
             "matches": ["https://www.yelp.com/user_details?*"],
             "js": [
-                "main.js",
-                "user_page.js",
-                "review_page.js",
-                "biz_page.js"
+                "js/main.js",
+                "js/user_page.js",
+                "js/review_page.js",
+                "js/biz_page.js"
             ]
         }
     ],
 
     "background": {
         "scripts": [
-            "background.js"
+            "js/background.js"
         ],
         "persistent": false
     },
 
     "page_action": {
-        "default_popup": "popup.html",
-        "default_icon": "icon.png",
+        "default_popup": "html/popup.html",
+        "default_icon": "images/icon.png",
         "default_title": "Yelp Cemetery Checker"
     },
 

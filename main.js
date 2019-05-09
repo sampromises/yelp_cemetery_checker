@@ -1,4 +1,4 @@
-DEBUG = 1;
+DEBUG = 0;
 
 
  //Make a fetch request and return Promise for 'div' element of entire page
@@ -16,75 +16,6 @@ function fetchPageRequest(url, callback) {
     }).catch(error => {
         console.log('fetchPageRequest error:', error)
     });
-}
-
-
-// Get all the reviews from this user
-function getUserReviewsList(href) {
-    DEBUG && console.log('getUserReviewsList() called for href =', href);
-    return fetchPageRequest(href)
-    .then(page => {
-        let reviews = getUserReviewsSinglePage(page);
-
-        try { // Could fail if only 1 review page
-            let pageLinkElems = page.getElementsByClassName('pagination-links arrange_unit')[0].getElementsByClassName('arrange_unit');
-            let nextLinkElem = pageLinkElems[pageLinkElems.length-1].getElementsByClassName('u-decoration-none')[0];
-
-            if (!nextLinkElem) { // Base case, no more review pages
-                DEBUG && console.log('getUserReviewsList() BC: no next');
-                return reviews;
-            } else {
-                href = nextLinkElem.href;
-                return getUserReviewsList(href).
-                then(results => {
-                    return reviews.concat(results);
-                });
-            }
-        } catch(error) {
-            DEBUG && console.log('getUserReviewsList() - error, returning reviews');
-            return reviews;
-        }
-    });
-}
-
-
-// Get promise for a single business result (recursive)
-function checkPageOfBizReview(bizName, href, pageNum, username, yelpingSince) {
-    var promise = fetchPageRequest(href)
-    .then(page => {
-        let earliestDate = getDateOfBottomReview(page);
-        let usernames = getUserNamesFromReviewPage(page);
-
-
-        if (usernames.includes(username)) { // Base case: Success
-            DEBUG && console.log('checkPageOfBizReview() - BC: Found username!');
-
-            // Update numDone to show user progress in popup
-            FINAL_RESULTS.numDone = FINAL_RESULTS.numDone + 1;
-            chrome.runtime.sendMessage(FINAL_RESULTS);
-
-            return {bizName: bizName, bizHref: href.split('?')[0], result: pageNum};
-        } else if (usernames.length == 0 || earliestDate < yelpingSince) {
-            // Base case: Failure (end of reviews, or earlier than possible)
-            DEBUG && console.log('checkPageOfBizReview() - BC: Username not found');
-            DEBUG && console.log('\tfor', href, 'got usernames:', usernames);
-            DEBUG && console.log('\tearliestDate:', earliestDate);
-            DEBUG && console.log('\tyelpingSince:', yelpingSince);
-
-            // Update numDone to show user progress in popup
-            FINAL_RESULTS.numDone = FINAL_RESULTS.numDone + 1;
-            chrome.runtime.sendMessage(FINAL_RESULTS);
-
-            return {bizName: bizName, bizHref: href.split('?')[0], result: -1};
-        } else { // Try the next page
-            href = href.split('?')[0];
-            href = href + '?start=' + ((pageNum-1)*usernames.length).toString() + '&sort_by=date_desc';
-            DEBUG && console.log('checkPageOfBizReview() - recursive, going to:', href);
-            return checkPageOfBizReview(bizName, href, pageNum+1, username, yelpingSince);
-        }
-    });
-
-    return promise;
 }
 
 
@@ -157,6 +88,7 @@ function main() {
 }
 
 
+// JSON of final results to send to popup.html
 var FINAL_RESULTS = {
     status: 'working',
     numDone: 0,

@@ -11,7 +11,8 @@
             "js": [
                 "main.js",
                 "user_page.js",
-                "review_page.js"
+                "review_page.js",
+                "biz_page.js"
             ]
         }
     ],

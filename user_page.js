@@ -13,6 +13,7 @@ function getUserName() {
         name = first_name + ' ' + last_name;
     }
 
+    DEBUG && console.log('getUserName() returning:', name);
     return name;
 }
 
@@ -25,6 +26,7 @@ function getUserYelpingSince() {
     dateText = dateText.substring(3, dateText.length);
     dateText = dateText.substring(0, dateText.indexOf('<'));
 
+    DEBUG && console.log('getUserYelpingSince() found:', dateText);
     return Date.parse(dateText);
 }
 
@@ -50,4 +52,33 @@ function getDateOfBottomReview(page) {
     var earliestDate = Date.parse(lastReview.querySelector('.rating-qualifier').innerText);
 
     return earliestDate;
+}
+
+
+// Get all the reviews from this user
+function getUserReviewsList(href) {
+    DEBUG && console.log('getUserReviewsList() called for href =', href);
+    return fetchPageRequest(href)
+    .then(page => {
+        let reviews = getUserReviewsSinglePage(page);
+
+        try { // Could fail if only 1 review page
+            let pageLinkElems = page.getElementsByClassName('pagination-links arrange_unit')[0].getElementsByClassName('arrange_unit');
+            let nextLinkElem = pageLinkElems[pageLinkElems.length-1].getElementsByClassName('u-decoration-none')[0];
+
+            if (!nextLinkElem) { // Base case, no more review pages
+                DEBUG && console.log('getUserReviewsList() BC: no next');
+                return reviews;
+            } else {
+                href = nextLinkElem.href;
+                return getUserReviewsList(href).
+                then(results => {
+                    return reviews.concat(results);
+                });
+            }
+        } catch(error) {
+            DEBUG && console.log('getUserReviewsList() - error, returning reviews');
+            return reviews;
+        }
+    });
 }

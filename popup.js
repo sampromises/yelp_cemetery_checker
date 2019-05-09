@@ -37,8 +37,6 @@ function populateHtmlFromResponse(response) {
         let liElem = document.createElement('li');
         liElem.innerHTML = '<a class="biz-link" target="_blank" href=https://www.yelp.com' + bizHref + '>' + result.bizName + '</a>';
 
-
-        //document.body.appendChild(liElem); 
         document.getElementById('results').appendChild(liElem);
     }
 

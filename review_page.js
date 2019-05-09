@@ -2,6 +2,11 @@
 function getUserReviewsSinglePage(reviewsPageDoc) {
     // Get all reviews
     var reviewsElementList = reviewsPageDoc.getElementsByClassName('biz-name');
+
+    if (reviewsElementList.length == 0) {
+        return []; // No reviews on this page
+    }
+
     var results = [];
     for (let i = 0; i < reviewsElementList.length; i++) {
         let bizName = reviewsElementList[i].getElementsByTagName('span')[0].innerText;
@@ -10,7 +15,7 @@ function getUserReviewsSinglePage(reviewsPageDoc) {
 
         results.push(result);
     }
-    // console.log('getUserReviewsSinglePage returning', result);
+    // DEBUG && console.log('getUserReviewsSinglePage returning', results);
     return results;
 }
 

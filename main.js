@@ -1,6 +1,9 @@
-// Make a fetch request and return Promise for 'div' element of entire page
+DEBUG = 1;
+
+
+ //Make a fetch request and return Promise for 'div' element of entire page
 function fetchPageRequest(url, callback) {
-    console.log('fetchPageRequest called for url:', url);
+    DEBUG && console.log('fetchPageRequest called for url:', url);
     return fetch(url).then(function(response) {
         let text = response.text();
         return text;
@@ -13,35 +16,30 @@ function fetchPageRequest(url, callback) {
     });
 }
 
-// Get all the reviews from this user, as an array with elements: 0-biz name, 1-href
-function getUserReviewsList(reviewsPage) {
-    // Get links to next pages of reviews
-    var pageLinks = [];
-    var pageLinkElems = reviewsPage.getElementsByClassName('arrange_unit page-option');
-    for (let i = 0; i < pageLinkElems.length; i++) {
-        let elem = pageLinkElems[i];
 
-        // Skip over 'current'
-        let classNames = elem.className.split(' ');
-        if (classNames.includes('current')) continue;
+// Get all the reviews from this user
+function getUserReviewsList(href) {
+    DEBUG && console.log('getUserReviewsList() called for href =', href);
+    return fetchPageRequest(href)
+    .then(page => {
+        let reviews = getUserReviewsSinglePage(page);
 
-        pageLinks.push(elem.getElementsByTagName('a')[0].getAttribute('href'));
-    }
+        let pageLinkElems = page.getElementsByClassName('pagination-links arrange_unit')[0].getElementsByClassName('arrange_unit');
+        let nextLinkElem = pageLinkElems[pageLinkElems.length-1].getElementsByClassName('u-decoration-none')[0];
 
-    // Return a list of promises
-    var firstPageReviews = getUserReviewsSinglePage(reviewsPage);
-    var firstPromise = Promise.resolve(firstPageReviews);
-    var promises = [firstPromise];
-    for (let i = 0; i < pageLinks.length; i++) {
-        let promise = fetchPageRequest(pageLinks[i])
-        .then(page => getUserReviewsSinglePage(page));
-
-        promises.push(promise);
-    }
-
-    // Flatten all page result arrays into a single array
-    return Promise.all(promises).then(arr => arr.flat());
+        if (!nextLinkElem) { // Base case, no more review pages
+            DEBUG && console.log('getUserReviewsList() BC: no next');
+            return reviews;
+        } else {
+            href = nextLinkElem.href;
+            return getUserReviewsList(href).
+            then(results => {
+                return reviews.concat(results);
+            });
+        }
+    });
 }
+
 
 // Get promise for a single business result (recursive)
 function checkPageOfBizReview(bizName, href, pageNum, username, yelpingSince) {
@@ -52,7 +50,7 @@ function checkPageOfBizReview(bizName, href, pageNum, username, yelpingSince) {
 
 
         if (usernames.includes(username)) { // Base case: Success
-            console.log('checkPageOfBizReview() - BC: Found username!');
+            DEBUG && console.log('checkPageOfBizReview() - BC: Found username!');
 
             // Update numDone to show user progress in popup
             FINAL_RESULTS.numDone = FINAL_RESULTS.numDone + 1;
@@ -61,10 +59,10 @@ function checkPageOfBizReview(bizName, href, pageNum, username, yelpingSince) {
             return {bizName: bizName, bizHref: href.split('?')[0], result: pageNum};
         } else if (usernames.length == 0 || earliestDate < yelpingSince) {
             // Base case: Failure (end of reviews, or earlier than possible)
-            console.log('checkPageOfBizReview() - BC: Username not found');
-            console.log('\tfor', href, 'got usernames:', usernames);
-            console.log('\tearliestDate:', earliestDate);
-            console.log('\tyelpingSince:', yelpingSince);
+            DEBUG && console.log('checkPageOfBizReview() - BC: Username not found');
+            DEBUG && console.log('\tfor', href, 'got usernames:', usernames);
+            DEBUG && console.log('\tearliestDate:', earliestDate);
+            DEBUG && console.log('\tyelpingSince:', yelpingSince);
 
             // Update numDone to show user progress in popup
             FINAL_RESULTS.numDone = FINAL_RESULTS.numDone + 1;
@@ -74,13 +72,14 @@ function checkPageOfBizReview(bizName, href, pageNum, username, yelpingSince) {
         } else { // Try the next page
             href = href.split('?')[0];
             href = href + '?start=' + ((pageNum-1)*usernames.length).toString() + '&sort_by=date_desc';
-            console.log('checkPageOfBizReview() - recursive, going to:', href);
+            DEBUG && console.log('checkPageOfBizReview() - recursive, going to:', href);
             return checkPageOfBizReview(bizName, href, pageNum+1, username, yelpingSince);
         }
     });
 
     return promise;
 }
+
 
 // The main function called to an array of reviews
 function getReviewsRanked(reviews, username, yelpingSince) {
@@ -98,6 +97,7 @@ function getReviewsRanked(reviews, username, yelpingSince) {
     return Promise.all(promises);
 }
 
+
 // Extract graveyarded reviews from results
 function getGraveyardedReviews(rankedReviews) {
     var results = [];
@@ -110,8 +110,9 @@ function getGraveyardedReviews(rankedReviews) {
     return results;
 }
 
+
 function main() {
-    console.log('Page loaded!');
+    DEBUG && console.log('Page loaded!');
     var startTime = performance.now();
 
     var username = getUserName();
@@ -120,14 +121,9 @@ function main() {
     // Wait for results
     var expectedLength = getUserReviewCount();
 
-    // Fetch user's Reviews page
-    fetchPageRequest(getReviewsPageHref())
-    .then(reviewsPage => {
-        // Get list of reviews (name, href) from reviews page
-        return getUserReviewsList(reviewsPage);
-    })
+    getUserReviewsList(getReviewsPageHref())
     .then(reviewsList => {
-        console.log('main() - got reviewsList:', reviewsList);
+        DEBUG && console.log('main() - got reviewsList:', reviewsList);
 
         FINAL_RESULTS.numReviews = expectedLength;
         chrome.runtime.sendMessage(FINAL_RESULTS);
@@ -162,8 +158,10 @@ var FINAL_RESULTS = {
     time: null
 };
 
+
 // Start collect results immediately
 window.onload = main;
+
 
 // Give results if popup asks
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse){

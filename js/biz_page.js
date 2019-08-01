@@ -2,7 +2,15 @@
 function checkPageOfBizReview(bizName, href, pageNum, username, yelpingSince) {
     var promise = fetchPageRequest(href)
     .then(page => {
-        let earliestDate = getDateOfBottomReview(page);
+        console.log('page title: ', bizName);
+        
+        if (bizName.includes('Apple Store')) {
+            console.log('Page title include Apple Store');
+            var earliestDate = getDateOfBottomReviewApple(page);
+        } else {
+            console.log('Page title does not include Apple Store');
+            var earliestDate = getDateOfBottomReview(page);
+        }
         let usernames = getUserNamesFromReviewPage(page);
 
 

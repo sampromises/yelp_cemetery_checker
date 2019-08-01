@@ -39,8 +39,14 @@ function getUserNamesFromReviewPage(reviewPageDoc) {
 
 // Get the date of the earliest review on this page (ASSUMED TO BE SORTED BY DATE DESCENDING)
 function getDateOfBottomReview(page) {
+    // console.log('getDateOfBottomReview called for:', page);
     // Get the most-bottom review on this page (sorted by most recent, so bottom is earliest date)
-    var reviews = page.querySelector('ul.ylist.ylist-bordered.reviews').querySelectorAll('.review');
+    try {
+        var reviews = page.querySelector('ul.ylist.ylist-bordered.reviews').querySelectorAll('.review');
+    } catch (error) {
+        console.log('crashed on page: ', page);
+        console.error(error);
+    }
     if (reviews.length == 1) { // No reviews on this page
         return Date.parse('July 2004'); // Return when Yelp was created
     }
@@ -51,3 +57,25 @@ function getDateOfBottomReview(page) {
     return Date.parse(dateText)
 }
 
+function getDateOfBottomReviewApple(page) {
+    // Get the most-bottom review on this page (sorted by most recent, so bottom is earliest date)
+    try {
+        var reviews = page.querySelector('div~div~.lemon--ul__373c0__1_cxs.undefined.list__373c0__2G8oH').querySelectorAll('li');
+        console.log('apple got reviews: ', reviews);
+    } catch (error) {
+        console.log('crashed on page: ', page);
+        console.error(error);
+    }
+    if (reviews.length == 1) { // No reviews on this page
+        console.log('apple returning: ', Date.parse('July 2004'));
+        return Date.parse('July 2004'); // Return when Yelp was created
+    }
+
+    var lastReview = reviews[reviews.length-1];
+    console.log('apple lastReview: ', lastReview);
+    var dateText = lastReview.querySelector('.lemon--span__373c0__3997G.text__373c0__2pB8f.text-color--mid__373c0__3G312.text-align--left__373c0__2pnx_').innerText;
+    console.log('apple dateText: ', dateText);
+
+    console.log('apple returning: ', Date.parse(dateText));
+    return Date.parse(dateText)
+}

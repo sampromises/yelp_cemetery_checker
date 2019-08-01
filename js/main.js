@@ -1,4 +1,4 @@
-DEBUG = 0;
+DEBUG = 1;
 
 
  //Make a fetch request and return Promise for 'div' element of entire page
